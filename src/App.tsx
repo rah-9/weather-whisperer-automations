@@ -34,16 +34,17 @@ const MissingEnvVarsComponent = () => (
   </div>
 );
 
-// Check if environment variables are available
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables. Please check your Lovable-Supabase integration.');
-  
-  const App = () => <MissingEnvVarsComponent />;
-  export default App;
-} else {
+// Main App component with conditional rendering
+const App = () => {
+  // Check if environment variables are available
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Missing Supabase environment variables. Please check your Lovable-Supabase integration.');
+    return <MissingEnvVarsComponent />;
+  }
+
   const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-  const App = () => (
+  return (
     <QueryClientProvider client={queryClient}>
       <SessionContextProvider supabaseClient={supabase}>
         <TooltipProvider>
@@ -59,6 +60,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
       </SessionContextProvider>
     </QueryClientProvider>
   );
+};
 
-  export default App;
-}
+export default App;
