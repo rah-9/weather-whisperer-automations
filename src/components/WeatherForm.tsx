@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react';
 import { validateEmail } from '../utils/validation';
 import { fetchWeatherData } from '../utils/weatherApi';
+import { insertWeatherData, sendWeatherEmail } from '../utils/supabaseOperations';
 import { Mail, Database, Send } from 'lucide-react';
 
 interface WeatherFormProps {
@@ -27,11 +29,13 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
     fullName: ''
   });
 
+  const user = useUser();
+  const supabase = useSupabaseClient();
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     
-    // Clear error when user starts typing
     if (errors[name as keyof typeof errors]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -70,6 +74,11 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
       return;
     }
 
+    if (!user) {
+      toast.error('Please sign in to continue');
+      return;
+    }
+
     setIsLoading(true);
     console.log('Form submitted:', formData);
 
@@ -85,23 +94,46 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
         emailValid: validateEmail(formData.email),
         temperature: weatherData.current.temp_c,
         condition: weatherData.current.condition.text,
-        aqi: weatherData.current.air_quality?.pm2_5 || 'N/A',
+        aqi: weatherData.current.air_quality?.pm2_5?.toString() || 'N/A',
         timestamp: new Date().toISOString(),
         weatherData: weatherData
       };
 
       console.log('Enriched data for storage:', enrichedData);
-      onWeatherData(enrichedData);
 
-      // Simulate database storage
-      toast.success('Data collected successfully! Weather summary generated.');
+      // Save to database
+      const dbData = {
+        user_id: user.id,
+        full_name: formData.fullName,
+        email: formData.email,
+        city: formData.city,
+        email_valid: validateEmail(formData.email),
+        temperature: weatherData.current.temp_c,
+        condition: weatherData.current.condition.text,
+        aqi: weatherData.current.air_quality?.pm2_5?.toString() || 'N/A',
+      };
+
+      await insertWeatherData(supabase, dbData);
+      console.log('Data saved to database successfully');
+
+      // Send email with AI commentary
+      try {
+        await sendWeatherEmail(supabase, enrichedData, formData.fullName, formData.email);
+        console.log('Email sent successfully');
+        toast.success('Weather data collected and email sent successfully!');
+      } catch (emailError) {
+        console.error('Email sending failed:', emailError);
+        toast.success('Weather data collected successfully! (Email sending unavailable)');
+      }
+
+      onWeatherData(enrichedData);
       
       // Clear form
       setFormData({ fullName: '', email: '', city: '' });
       
     } catch (error) {
       console.error('Error processing form:', error);
-      toast.error('Failed to fetch weather data. Please try again.');
+      toast.error('Failed to process request. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -186,7 +218,7 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
             ) : (
               <>
                 <Send className="w-4 h-4" />
-                Get Weather Data
+                Get Weather Data & Send Email
               </>
             )}
           </Button>
