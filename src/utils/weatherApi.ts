@@ -36,9 +36,19 @@ export const fetchWeatherData = async (city: string): Promise<WeatherData> => {
   console.log(`Fetching weather data for: ${city}`);
   
   try {
-    const response = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);
+    // Use the correct Supabase function URL with city as query parameter
+    const response = await fetch(`https://qinbteuulduxmyeavzgf.supabase.co/functions/v1/weather-api?city=${encodeURIComponent(city)}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpbmJ0ZXV1bGR1eG15ZWF2emdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNzQxNTQsImV4cCI6MjA2Mzg1MDE1NH0.Fi1umdY0m-vlP9foC7P61vdk8ENfSwbKuDrlKuISh3A`,
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpbmJ0ZXV1bGR1eG15ZWF2emdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNzQxNTQsImV4cCI6MjA2Mzg1MDE1NH0.Fi1umdY0m-vlP9foC7P61vdk8ENfSwbKuDrlKuISh3A',
+        'Content-Type': 'application/json'
+      }
+    });
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Weather API error response:', errorText);
       throw new Error(`Weather API error: ${response.status} ${response.statusText}`);
     }
     

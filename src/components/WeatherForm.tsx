@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react';
 import { validateEmail } from '../utils/validation';
 import { insertWeatherData, sendWeatherEmail } from '../utils/supabaseOperations';
+import { fetchWeatherData } from '../utils/weatherApi';
 import { Mail, Database, Send } from 'lucide-react';
 
 interface WeatherFormProps {
@@ -65,22 +66,6 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
     return !Object.values(newErrors).some(error => error !== '');
   };
 
-  const fetchWeatherData = async (city: string) => {
-    console.log(`Fetching weather data for: ${city}`);
-    
-    const { data, error } = await supabase.functions.invoke('weather-api', {
-      body: { city }
-    });
-
-    if (error) {
-      console.error('Weather API error:', error);
-      throw new Error('Failed to fetch weather data. Please check the city name and try again.');
-    }
-
-    console.log('Weather data received:', data);
-    return data;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -98,7 +83,7 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
     console.log('Form submitted:', formData);
 
     try {
-      // Fetch weather data from our backend
+      // Fetch weather data using the weather API utility
       const weatherData = await fetchWeatherData(formData.city);
       
       // Prepare data for storage
@@ -133,7 +118,7 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
 
       // Send email with AI commentary
       try {
-        await sendWeatherEmail(supabase, enrichedData, formData.fullName, formData.email);
+        await sendWeatherEmail(supabase, weatherData, formData.fullName, formData.email);
         console.log('Email sent successfully');
         toast.success('Weather data collected and email sent successfully!');
       } catch (emailError) {

@@ -13,7 +13,17 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url)
-    const city = url.searchParams.get('city')
+    let city = url.searchParams.get('city')
+    
+    // If city is not in query params, check the request body
+    if (!city) {
+      try {
+        const body = await req.json()
+        city = body.city
+      } catch (e) {
+        // If we can't parse JSON, that's okay, we'll use the query param approach
+      }
+    }
     
     if (!city) {
       return new Response(
@@ -25,23 +35,25 @@ serve(async (req) => {
     const weatherApiKey = Deno.env.get('WEATHER_API_KEY')
     
     if (!weatherApiKey) {
+      console.error('Weather API key not configured')
       throw new Error('Weather API key not configured')
     }
 
     const weatherApiUrl = `https://api.weatherapi.com/v1/current.json?key=${weatherApiKey}&q=${encodeURIComponent(city)}&aqi=yes`
     
     console.log(`Fetching weather data for city: ${city}`)
+    console.log(`Weather API URL: ${weatherApiUrl}`)
     
     const weatherResponse = await fetch(weatherApiUrl)
     
     if (!weatherResponse.ok) {
       const errorText = await weatherResponse.text()
-      console.error('Weather API error:', errorText)
+      console.error('Weather API error response:', errorText)
       throw new Error(`Weather API error: ${weatherResponse.status} ${weatherResponse.statusText}`)
     }
 
     const weatherData = await weatherResponse.json()
-    console.log('Weather data fetched successfully:', weatherData)
+    console.log('Weather data fetched successfully:', JSON.stringify(weatherData, null, 2))
 
     return new Response(
       JSON.stringify(weatherData),
