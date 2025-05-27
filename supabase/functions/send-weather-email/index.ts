@@ -14,20 +14,25 @@ serve(async (req) => {
   try {
     const { weatherData, userName, userEmail } = await req.json()
 
-    // Get AI commentary
-    const aiCommentary = await generateAICommentary(weatherData)
+    console.log('Processing email request for:', userEmail)
+
+    // Get AI commentary using Google Gemini
+    const aiCommentary = await generateGeminiCommentary(weatherData)
 
     // Prepare email content
     const emailContent = `Hi ${userName},
 
 Thanks for submitting your details.
 
-Here's the current weather for ${weatherData.city}:
+Here's the current weather for ${weatherData.location.name}:
 
-- Temperature: ${weatherData.temperature}°C
-- Condition: ${weatherData.condition}
-- AQI: ${weatherData.aqi}
+- Temperature: ${weatherData.current.temp_c}°C
+- Condition: ${weatherData.current.condition.text}
+- Wind Speed: ${weatherData.current.wind_kph} kph
+- Humidity: ${weatherData.current.humidity}%
+- AQI: ${weatherData.current.air_quality?.pm2_5 || 'N/A'}
 
+AI Weather Insight:
 ${aiCommentary}
 
 Stay safe and take care!
@@ -35,7 +40,7 @@ Stay safe and take care!
 Thanks,
 Weather Automation System`
 
-    // Send email (using Resend API)
+    // Send email using Resend API
     const resendApiKey = Deno.env.get('RESEND_API_KEY')
     
     if (!resendApiKey) {
@@ -47,6 +52,8 @@ Weather Automation System`
       )
     }
 
+    console.log('Sending email via Resend API...')
+
     const emailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -54,19 +61,24 @@ Weather Automation System`
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Weather System <weather@yourdomain.com>',
+        from: 'Weather System <onboarding@resend.dev>',
         to: [userEmail],
-        subject: `Weather Summary for ${weatherData.city}`,
+        subject: `Weather Summary for ${weatherData.location.name}`,
         text: emailContent,
       }),
     })
 
     if (!emailResponse.ok) {
+      const errorText = await emailResponse.text()
+      console.error('Email API error:', errorText)
       throw new Error(`Email API error: ${emailResponse.status}`)
     }
 
+    const emailResult = await emailResponse.json()
+    console.log('Email sent successfully:', emailResult)
+
     return new Response(
-      JSON.stringify({ success: true, message: 'Email sent successfully' }),
+      JSON.stringify({ success: true, message: 'Email sent successfully', emailId: emailResult.id }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
@@ -79,43 +91,50 @@ Weather Automation System`
   }
 })
 
-async function generateAICommentary(weatherData: any): Promise<string> {
+async function generateGeminiCommentary(weatherData: any): Promise<string> {
   try {
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
+    const googleApiKey = Deno.env.get('GOOGLE_API_KEY')
     
-    if (!openaiApiKey) {
+    if (!googleApiKey) {
       return generateBasicCommentary(weatherData)
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const prompt = `Current weather conditions: Temperature ${weatherData.current.temp_c}°C, ${weatherData.current.condition.text}, Wind ${weatherData.current.wind_kph} kph, Humidity ${weatherData.current.humidity}%, AQI ${weatherData.current.air_quality?.pm2_5 || 'N/A'}. Provide a brief, friendly weather commentary with practical advice in 2-3 sentences.`
+
+    console.log('Generating AI commentary with Gemini...')
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${googleApiKey}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a helpful weather assistant. Provide a brief, friendly commentary about the weather conditions and air quality. Keep it under 2 sentences and include practical advice.'
-          },
-          {
-            role: 'user',
-            content: `Current weather: Temperature ${weatherData.temperature}°C, Condition: ${weatherData.condition}, AQI: ${weatherData.aqi}. Provide a brief commentary with advice.`
-          }
-        ],
-        max_tokens: 100,
-        temperature: 0.7,
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+        generationConfig: {
+          maxOutputTokens: 150,
+          temperature: 0.7,
+        }
       }),
     })
 
     if (!response.ok) {
+      console.error('Gemini API error:', response.status)
       return generateBasicCommentary(weatherData)
     }
 
     const data = await response.json()
-    return data.choices[0]?.message?.content || generateBasicCommentary(weatherData)
+    const commentary = data.candidates?.[0]?.content?.parts?.[0]?.text
+    
+    if (commentary) {
+      console.log('AI commentary generated successfully')
+      return commentary.trim()
+    } else {
+      return generateBasicCommentary(weatherData)
+    }
 
   } catch (error) {
     console.error('AI commentary error:', error)
@@ -124,10 +143,10 @@ async function generateAICommentary(weatherData: any): Promise<string> {
 }
 
 function generateBasicCommentary(weatherData: any): string {
-  const aqi = parseFloat(weatherData.aqi)
-  const temp = parseFloat(weatherData.temperature)
+  const aqi = weatherData.current.air_quality?.pm2_5
+  const temp = weatherData.current.temp_c
 
-  if (isNaN(aqi)) {
+  if (!aqi || isNaN(aqi)) {
     return "Weather data collected successfully. Have a great day!"
   }
 

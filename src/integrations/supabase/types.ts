@@ -9,7 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      weather_data: {
+        Row: {
+          aqi: string | null
+          city: string
+          condition: string | null
+          created_at: string | null
+          email: string
+          email_valid: boolean
+          full_name: string
+          id: string
+          temperature: number | null
+          timestamp: string | null
+          user_id: string
+        }
+        Insert: {
+          aqi?: string | null
+          city: string
+          condition?: string | null
+          created_at?: string | null
+          email: string
+          email_valid: boolean
+          full_name: string
+          id?: string
+          temperature?: number | null
+          timestamp?: string | null
+          user_id: string
+        }
+        Update: {
+          aqi?: string | null
+          city?: string
+          condition?: string | null
+          created_at?: string | null
+          email?: string
+          email_valid?: boolean
+          full_name?: string
+          id?: string
+          temperature?: number | null
+          timestamp?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -16,6 +16,8 @@ export const insertWeatherData = async (
   supabase: SupabaseClient,
   data: WeatherDataInsert
 ) => {
+  console.log('Inserting weather data:', data);
+  
   const { data: insertedData, error } = await supabase
     .from('weather_data')
     .insert([data])
@@ -27,6 +29,7 @@ export const insertWeatherData = async (
     throw new Error('Failed to save weather data');
   }
 
+  console.log('Weather data inserted successfully:', insertedData);
   return insertedData;
 };
 
@@ -36,6 +39,8 @@ export const sendWeatherEmail = async (
   userName: string,
   userEmail: string
 ) => {
+  console.log('Sending weather email via backend...');
+  
   const { data, error } = await supabase.functions.invoke('send-weather-email', {
     body: {
       weatherData,
@@ -49,5 +54,6 @@ export const sendWeatherEmail = async (
     throw new Error('Failed to send email');
   }
 
+  console.log('Email sent successfully:', data);
   return data;
 };

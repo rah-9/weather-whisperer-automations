@@ -1,1 +1,8 @@
+
 project_id = "qinbteuulduxmyeavzgf"
+
+[functions.weather-api]
+verify_jwt = false
+
+[functions.send-weather-email]
+verify_jwt = false
