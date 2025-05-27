@@ -3,6 +3,8 @@
  * Weather API integration using WeatherAPI.com
  */
 
+import { supabase } from "@/integrations/supabase/client";
+
 export interface WeatherData {
   location: {
     name: string;
@@ -36,23 +38,20 @@ export const fetchWeatherData = async (city: string): Promise<WeatherData> => {
   console.log(`Fetching weather data for: ${city}`);
   
   try {
-    // Use the correct Supabase function URL with city as query parameter
-    const response = await fetch(`https://qinbteuulduxmyeavzgf.supabase.co/functions/v1/weather-api?city=${encodeURIComponent(city)}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpbmJ0ZXV1bGR1eG15ZWF2emdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNzQxNTQsImV4cCI6MjA2Mzg1MDE1NH0.Fi1umdY0m-vlP9foC7P61vdk8ENfSwbKuDrlKuISh3A`,
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpbmJ0ZXV1bGR1eG15ZWF2emdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNzQxNTQsImV4cCI6MjA2Mzg1MDE1NH0.Fi1umdY0m-vlP9foC7P61vdk8ENfSwbKuDrlKuISh3A',
-        'Content-Type': 'application/json'
-      }
+    // Use Supabase client to call the edge function
+    const { data, error } = await supabase.functions.invoke('weather-api', {
+      body: { city }
     });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Weather API error response:', errorText);
-      throw new Error(`Weather API error: ${response.status} ${response.statusText}`);
+
+    if (error) {
+      console.error('Weather API error:', error);
+      throw new Error('Failed to fetch weather data. Please check the city name and try again.');
+    }
+
+    if (!data) {
+      throw new Error('No weather data received');
     }
     
-    const data = await response.json();
     console.log('Weather API response:', data);
     return data;
   } catch (error) {
