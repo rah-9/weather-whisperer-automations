@@ -260,50 +260,50 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
   };
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-12 animate-fade-in">
       <Card className="w-full shadow-2xl bg-white/95 backdrop-blur-sm border-0 hover:shadow-3xl transition-all duration-300 card-hover overflow-hidden">
-        <CardHeader className="text-center bg-gradient-to-r from-blue-50 via-indigo-50 to-cyan-50 rounded-t-lg p-8 relative">
+        <CardHeader className="text-center bg-gradient-to-r from-blue-50 via-indigo-50 to-cyan-50 rounded-t-lg p-10 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-blue-100/20 via-purple-100/20 to-cyan-100/20 animate-pulse-slow"></div>
-          <CardTitle className="text-3xl font-bold text-gray-800 flex items-center justify-center gap-3 animate-scale-in relative z-10">
-            <CloudSun className="w-8 h-8 text-blue-600 animate-bounce-slow" />
+          <CardTitle className="text-4xl font-bold text-gray-800 flex items-center justify-center gap-4 animate-scale-in relative z-10 mb-6">
+            <CloudSun className="w-10 h-10 text-blue-600 animate-bounce-slow" />
             Weather Intelligence Hub
-            <Sparkles className="w-6 h-6 text-purple-500 animate-pulse" />
+            <Sparkles className="w-8 h-8 text-purple-500 animate-pulse" />
           </CardTitle>
-          <p className="text-gray-600 text-lg mt-4 relative z-10">Get real-time weather data with AI-powered insights</p>
+          <p className="text-gray-600 text-xl mt-6 relative z-10 leading-relaxed">Get real-time weather data with AI-powered insights</p>
         </CardHeader>
         
-        <CardContent className="p-8 space-y-8">
+        <CardContent className="p-12 space-y-12">
           {submitError && (
-            <Alert className="border-red-200 bg-red-50 animate-fade-in">
-              <AlertCircle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800">
+            <Alert className="border-red-200 bg-red-50 animate-fade-in mb-8">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <AlertDescription className="text-red-800 text-lg">
                 {submitError}
               </AlertDescription>
             </Alert>
           )}
 
           {emailSent && (
-            <Alert className="border-green-200 bg-green-50 animate-fade-in">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800">
+            <Alert className="border-green-200 bg-green-50 animate-fade-in mb-8">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <AlertDescription className="text-green-800 text-lg">
                 ✅ Weather intelligence report sent successfully to {formData.email}! Check your inbox for the detailed analysis.
               </AlertDescription>
             </Alert>
           )}
 
           {isLoading && processingStep && (
-            <Alert className="border-blue-200 bg-blue-50 animate-fade-in">
-              <Sparkles className="h-4 w-4 text-blue-600 animate-spin" />
-              <AlertDescription className="text-blue-800">
+            <Alert className="border-blue-200 bg-blue-50 animate-fade-in mb-8">
+              <Sparkles className="h-5 w-5 text-blue-600 animate-spin" />
+              <AlertDescription className="text-blue-800 text-lg">
                 {processingStep}
               </AlertDescription>
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-3 transform hover:scale-[1.01] transition-transform duration-200">
-                <Label htmlFor="fullName" className="text-sm font-semibold text-gray-700">
+          <form onSubmit={handleSubmit} className="space-y-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+              <div className="space-y-6 transform hover:scale-[1.02] transition-transform duration-300">
+                <Label htmlFor="fullName" className="text-lg font-semibold text-gray-700">
                   Full Name *
                 </Label>
                 <Input
@@ -313,20 +313,20 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
                   value={formData.fullName}
                   onChange={handleInputChange}
                   placeholder="Enter your full name"
-                  className={`h-14 transition-all duration-200 ${errors.fullName ? 'border-red-500 focus:border-red-500 bg-red-50' : 'focus:border-blue-500 hover:border-blue-300'}`}
+                  className={`h-16 text-lg transition-all duration-200 ${errors.fullName ? 'border-red-500 focus:border-red-500 bg-red-50' : 'focus:border-blue-500 hover:border-blue-300'}`}
                   disabled={isLoading}
                 />
                 {errors.fullName && (
-                  <p className="text-sm text-red-600 flex items-center gap-1 animate-fade-in">
-                    <AlertCircle className="w-3 h-3" />
+                  <p className="text-sm text-red-600 flex items-center gap-2 animate-fade-in mt-2">
+                    <AlertCircle className="w-4 h-4" />
                     {errors.fullName}
                   </p>
                 )}
               </div>
 
-              <div className="space-y-3 transform hover:scale-[1.01] transition-transform duration-200">
-                <Label htmlFor="email" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
+              <div className="space-y-6 transform hover:scale-[1.02] transition-transform duration-300">
+                <Label htmlFor="email" className="text-lg font-semibold text-gray-700 flex items-center gap-3">
+                  <Mail className="w-5 h-5" />
                   Email Address *
                 </Label>
                 <Input
@@ -336,21 +336,21 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
                   value={formData.email}
                   onChange={handleInputChange}
                   placeholder="Enter your email address"
-                  className={`h-14 transition-all duration-200 ${errors.email ? 'border-red-500 focus:border-red-500 bg-red-50' : 'focus:border-blue-500 hover:border-blue-300'}`}
+                  className={`h-16 text-lg transition-all duration-200 ${errors.email ? 'border-red-500 focus:border-red-500 bg-red-50' : 'focus:border-blue-500 hover:border-blue-300'}`}
                   disabled={isLoading}
                 />
                 {errors.email && (
-                  <p className="text-sm text-red-600 flex items-center gap-1 animate-fade-in">
-                    <AlertCircle className="w-3 h-3" />
+                  <p className="text-sm text-red-600 flex items-center gap-2 animate-fade-in mt-2">
+                    <AlertCircle className="w-4 h-4" />
                     {errors.email}
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="space-y-3 transform hover:scale-[1.01] transition-transform duration-200">
-              <Label htmlFor="city" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <Database className="w-4 h-4" />
+            <div className="space-y-6 transform hover:scale-[1.02] transition-transform duration-300">
+              <Label htmlFor="city" className="text-lg font-semibold text-gray-700 flex items-center gap-3">
+                <Database className="w-5 h-5" />
                 City *
               </Label>
               <Input
@@ -360,21 +360,21 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
                 value={formData.city}
                 onChange={handleInputChange}
                 placeholder="Enter your city (e.g., London, New York, Tokyo)"
-                className={`h-14 transition-all duration-200 ${errors.city ? 'border-red-500 focus:border-red-500 bg-red-50' : 'focus:border-blue-500 hover:border-blue-300'}`}
+                className={`h-16 text-lg transition-all duration-200 ${errors.city ? 'border-red-500 focus:border-red-500 bg-red-50' : 'focus:border-blue-500 hover:border-blue-300'}`}
                 disabled={isLoading}
               />
               {errors.city && (
-                <p className="text-sm text-red-600 flex items-center gap-1 animate-fade-in">
-                  <AlertCircle className="w-3 h-3" />
+                <p className="text-sm text-red-600 flex items-center gap-2 animate-fade-in mt-2">
+                  <AlertCircle className="w-4 h-4" />
                   {errors.city}
                 </p>
               )}
             </div>
 
-            <div className="pt-6">
+            <div className="pt-8">
               <Button 
                 type="submit" 
-                className="w-full h-16 bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-600 hover:from-blue-700 hover:via-blue-800 hover:to-cyan-700 text-white font-bold text-lg rounded-xl transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl flex items-center justify-center gap-3 disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none"
+                className="w-full h-20 bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-600 hover:from-blue-700 hover:via-blue-800 hover:to-cyan-700 text-white font-bold text-xl rounded-xl transition-all duration-300 transform hover:scale-[1.02] hover:shadow-2xl flex items-center justify-center gap-4 disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -384,35 +384,35 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
                   </>
                 ) : (
                   <>
-                    <Send className="w-5 h-5" />
+                    <Send className="w-6 h-6" />
                     <span>Generate Weather Intelligence Report</span>
-                    <Sparkles className="w-5 h-5 animate-pulse" />
+                    <Sparkles className="w-6 h-6 animate-pulse" />
                   </>
                 )}
               </Button>
             </div>
           </form>
 
-          <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-100 animate-fade-in">
-            <h4 className="font-semibold text-gray-800 mb-4 text-lg flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-purple-500" />
+          <div className="mt-12 p-8 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-100 animate-fade-in">
+            <h4 className="font-semibold text-gray-800 mb-6 text-xl flex items-center gap-3">
+              <Sparkles className="w-6 h-6 text-purple-500" />
               What happens next?
             </h4>
-            <ul className="text-sm text-gray-600 space-y-3">
-              <li className="flex items-center gap-3">
-                <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+            <ul className="text-base text-gray-600 space-y-4">
+              <li className="flex items-center gap-4">
+                <span className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></span>
                 Real-time weather data fetched from global weather stations
               </li>
-              <li className="flex items-center gap-3">
-                <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span>
+              <li className="flex items-center gap-4">
+                <span className="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></span>
                 AI analyzes conditions and provides personalized recommendations
               </li>
-              <li className="flex items-center gap-3">
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+              <li className="flex items-center gap-4">
+                <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
                 Comprehensive weather report automatically sent to your email
               </li>
-              <li className="flex items-center gap-3">
-                <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+              <li className="flex items-center gap-4">
+                <span className="w-3 h-3 bg-orange-500 rounded-full animate-pulse"></span>
                 Data securely stored for your weather history tracking
               </li>
             </ul>

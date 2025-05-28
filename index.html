@@ -22,6 +22,14 @@
     <!-- Performance optimizations -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="robots" content="index, follow">
+    
+    <!-- Netlify Forms support -->
+    <form name="weather-email" netlify netlify-honeypot="bot-field" hidden>
+      <input type="text" name="name" />
+      <input type="email" name="email" />
+      <input type="text" name="subject" />
+      <textarea name="message"></textarea>
+    </form>
   </head>
   <body>
     <div id="root"></div>
