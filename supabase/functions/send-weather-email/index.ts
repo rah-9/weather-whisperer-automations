@@ -14,53 +14,51 @@ serve(async (req) => {
   try {
     const { weatherData, userName, userEmail } = await req.json()
 
-    console.log('Processing email request for:', userEmail)
+    console.log(`Processing email request for: ${userEmail}`)
     console.log('Weather data received:', JSON.stringify(weatherData, null, 2))
 
     // Get AI commentary using Google Gemini
     const aiCommentary = await generateGeminiCommentary(weatherData)
 
-    // Prepare enhanced email content
+    // Prepare email content following the exact format requested
     const emailContent = `Hi ${userName},
 
-Thanks for using our Weather Intelligence Hub! 
+Thanks for submitting your details.
 
-Here's your personalized weather report for ${weatherData.location.name}:
+Here's the current weather for ${weatherData.location.name}:
 
-🌡️ CURRENT CONDITIONS
-• Temperature: ${weatherData.current.temp_c}°C (${weatherData.current.temp_f}°F)
-• Weather: ${weatherData.current.condition.text}
-• Wind Speed: ${weatherData.current.wind_kph} km/h
-• Humidity: ${weatherData.current.humidity}%
-• Air Quality (PM2.5): ${weatherData.current.air_quality?.pm2_5 || 'N/A'}
+- Temperature: ${weatherData.current.temp_c}°C
+- Condition: ${weatherData.current.condition.text}
+- AQI: ${weatherData.current.air_quality?.pm2_5 || 'N/A'}
 
-🤖 AI WEATHER INSIGHT:
-${aiCommentary}
+${aiCommentary ? `AI Weather Insight: ${aiCommentary}` : ''}
 
-📍 Location Details:
-${weatherData.location.name}, ${weatherData.location.region}, ${weatherData.location.country}
+Stay safe and take care!
 
-Stay informed and stay safe!
-
-Best regards,
+Thanks,
 Weather Intelligence Hub Team
 
 ---
-This report was generated automatically based on real-time weather data.`
+This report was generated automatically based on real-time weather data.
+Generated at: ${new Date().toLocaleString()}`
 
-    // Send email using Resend API
+    // Send email using Resend API to the user's email address
     const resendApiKey = Deno.env.get('RESEND_API_KEY')
     
     if (!resendApiKey) {
-      console.log('Email would be sent to:', userEmail)
+      console.log(`Email would be sent to: ${userEmail}`)
       console.log('Email content:', emailContent)
       return new Response(
-        JSON.stringify({ success: true, message: 'Email logged (no API key configured)', content: emailContent }),
+        JSON.stringify({ 
+          success: true, 
+          message: `Email logged for ${userEmail} (no API key configured)`, 
+          content: emailContent 
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    console.log('Sending email via Resend API...')
+    console.log(`Sending email via Resend API to: ${userEmail}`)
 
     const emailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -70,7 +68,7 @@ This report was generated automatically based on real-time weather data.`
       },
       body: JSON.stringify({
         from: 'Weather Intelligence Hub <onboarding@resend.dev>',
-        to: [userEmail],
+        to: [userEmail], // Send to the user's actual email
         subject: `🌤️ Weather Intelligence Report for ${weatherData.location.name}`,
         text: emailContent,
       }),
@@ -80,14 +78,14 @@ This report was generated automatically based on real-time weather data.`
       const errorText = await emailResponse.text()
       console.error('Email API error:', errorText)
       
-      // Log the email content for debugging in development
-      console.log('Email content that failed to send:', emailContent)
+      // Log the email content for debugging
+      console.log(`Email content that failed to send to ${userEmail}:`, emailContent)
       
-      // Return success with fallback message for development
+      // Return success with fallback message
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: 'Email processing completed (check logs for details)',
+          message: `Email processing completed for ${userEmail} (check logs for details)`,
           content: emailContent,
           error: errorText 
         }),
@@ -96,10 +94,14 @@ This report was generated automatically based on real-time weather data.`
     }
 
     const emailResult = await emailResponse.json()
-    console.log('Email sent successfully:', emailResult)
+    console.log(`Email sent successfully to ${userEmail}:`, emailResult)
 
     return new Response(
-      JSON.stringify({ success: true, message: 'Email sent successfully', emailId: emailResult.id }),
+      JSON.stringify({ 
+        success: true, 
+        message: `Email sent successfully to ${userEmail}`, 
+        emailId: emailResult.id 
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
@@ -121,14 +123,16 @@ async function generateGeminiCommentary(weatherData: any): Promise<string> {
       return generateBasicCommentary(weatherData)
     }
 
+    const temp = weatherData.current.temp_c
+    const condition = weatherData.current.condition.text
+    const aqi = weatherData.current.air_quality?.pm2_5 || 'N/A'
+
     const prompt = `Based on the current weather conditions in ${weatherData.location.name}: 
-    - Temperature: ${weatherData.current.temp_c}°C
-    - Weather: ${weatherData.current.condition.text}
-    - Wind: ${weatherData.current.wind_kph} km/h
-    - Humidity: ${weatherData.current.humidity}%
-    - Air Quality PM2.5: ${weatherData.current.air_quality?.pm2_5 || 'N/A'}
+    - Temperature: ${temp}°C
+    - Weather: ${condition}
+    - AQI: ${aqi}
     
-    Provide a friendly, practical weather commentary with personalized advice for today's activities. Include health and comfort recommendations. Keep it conversational and helpful in 3-4 sentences.`
+    Provide a brief, practical weather commentary with outdoor activity recommendations. Focus on health and safety advice. Keep it under 2 sentences and friendly.`
 
     console.log('Generating AI commentary with Gemini...')
 
@@ -144,7 +148,7 @@ async function generateGeminiCommentary(weatherData: any): Promise<string> {
           }]
         }],
         generationConfig: {
-          maxOutputTokens: 200,
+          maxOutputTokens: 150,
           temperature: 0.7,
         }
       }),
@@ -177,31 +181,29 @@ function generateBasicCommentary(weatherData: any): string {
   const condition = weatherData.current.condition.text.toLowerCase()
   const aqi = weatherData.current.air_quality?.pm2_5
 
-  let commentary = `The current temperature of ${temp}°C feels `
+  let commentary = ""
   
   if (temp < 10) {
-    commentary += "quite cold - consider wearing warm layers and a jacket. "
+    commentary += "Bundle up with warm clothes! "
   } else if (temp < 20) {
-    commentary += "cool and comfortable - a light jacket would be perfect. "
-  } else if (temp < 30) {
-    commentary += "pleasant and mild - great weather for outdoor activities. "
+    commentary += "Perfect weather for a light jacket. "
+  } else if (temp > 30) {
+    commentary += "Stay hydrated and seek shade during peak hours. "
   } else {
-    commentary += "warm - stay hydrated and consider light clothing. "
+    commentary += "Comfortable temperature for outdoor activities. "
   }
 
   if (condition.includes('rain')) {
-    commentary += "Don't forget an umbrella as rain is expected. "
+    commentary += "Don't forget your umbrella!"
   } else if (condition.includes('sun')) {
-    commentary += "It's a sunny day, so sunscreen is recommended. "
+    commentary += "Great day to enjoy some sunshine!"
   }
 
   if (aqi && !isNaN(aqi)) {
-    if (aqi <= 35) {
-      commentary += "The air quality is good, perfect for outdoor exercise!"
-    } else if (aqi <= 55) {
-      commentary += "Air quality is moderate - sensitive individuals should limit prolonged outdoor exposure."
+    if (aqi > 50) {
+      commentary += " Air quality is moderate - limit prolonged outdoor exposure."
     } else {
-      commentary += "Air quality is concerning - consider staying indoors and avoiding strenuous outdoor activities."
+      commentary += " Excellent air quality for outdoor activities!"
     }
   }
 
