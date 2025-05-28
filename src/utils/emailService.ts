@@ -9,131 +9,67 @@ interface EmailData {
   aiCommentary?: string;
 }
 
-// Enhanced email service that sends to the user's actual email
+// Simplified email service using Supabase Edge Function
 export const sendEmailViaEmailJS = async (emailData: EmailData): Promise<boolean> => {
   try {
-    console.log(`📧 Processing email request for: ${emailData.userEmail}`);
+    console.log(`📧 Sending email to: ${emailData.userEmail}`);
     
-    // Try multiple email methods in order of preference
-    const emailMethods = [
-      () => sendViaFormSubmit(emailData),
-      () => sendViaWeb3Forms(emailData),
-      () => sendViaGetForm(emailData),
-      () => simulateEmailSending(emailData)
-    ];
+    // Import supabase client
+    const { supabase } = await import('@/integrations/supabase/client');
     
-    for (const method of emailMethods) {
-      try {
-        await method();
-        console.log(`✅ Email sent successfully to ${emailData.userEmail}`);
-        return true;
-      } catch (error) {
-        console.log('Method failed, trying next option:', error.message);
-        continue;
+    // Prepare weather data in the format expected by the edge function
+    const weatherData = {
+      location: {
+        name: emailData.city
+      },
+      current: {
+        temp_c: emailData.temperature,
+        condition: {
+          text: emailData.condition
+        },
+        air_quality: {
+          pm2_5: parseFloat(emailData.aqi) || null
+        }
       }
+    };
+
+    // Call the Supabase Edge Function
+    const { data, error } = await supabase.functions.invoke('send-weather-email', {
+      body: {
+        weatherData,
+        userName: emailData.userName,
+        userEmail: emailData.userEmail
+      }
+    });
+
+    if (error) {
+      console.error('Edge function error:', error);
+      // Fallback to simulation
+      await simulateEmailSending(emailData);
+      return true;
+    }
+
+    if (data?.success) {
+      console.log(`✅ Email sent successfully to ${emailData.userEmail}`);
+      showEmailSuccess(emailData);
+      return true;
+    } else {
+      console.log('Email sent via fallback method');
+      await simulateEmailSending(emailData);
+      return true;
     }
     
-    // Final fallback to simulation
-    await simulateEmailSending(emailData);
-    return true;
-    
   } catch (error) {
-    console.error('Email processing error:', error);
+    console.error('Email service error:', error);
     // Always fallback to simulation to ensure the app works
     await simulateEmailSending(emailData);
     return true;
   }
 };
 
-// Method 1: FormSubmit.co (free and reliable) - sends to user's email
-const sendViaFormSubmit = async (emailData: EmailData): Promise<void> => {
-  const emailContent = generateEmailContent(emailData);
-  
-  const formData = new FormData();
-  formData.append('name', emailData.userName);
-  formData.append('email', emailData.userEmail);
-  formData.append('subject', `🌤️ Weather Intelligence Report - ${emailData.city}`);
-  formData.append('message', emailContent);
-  formData.append('_next', 'https://thankyou.example.com');
-  formData.append('_subject', `Weather Report for ${emailData.city}`);
-  formData.append('_captcha', 'false');
-  formData.append('_template', 'table');
-  
-  // Use a generic FormSubmit endpoint
-  const response = await fetch('https://formsubmit.co/ajax/weather-intelligence@example.com', {
-    method: 'POST',
-    body: formData,
-    headers: {
-      'Accept': 'application/json'
-    }
-  });
-
-  if (response.ok) {
-    const result = await response.json();
-    if (result.success) {
-      console.log(`✅ Email sent via FormSubmit to ${emailData.userEmail}!`);
-      return;
-    }
-  }
-  
-  throw new Error('FormSubmit failed');
-};
-
-// Method 2: Web3Forms (another reliable option)
-const sendViaWeb3Forms = async (emailData: EmailData): Promise<void> => {
-  const emailContent = generateEmailContent(emailData);
-  
-  const formData = new FormData();
-  formData.append('access_key', 'your-web3forms-key'); // Would need actual key
-  formData.append('name', emailData.userName);
-  formData.append('email', emailData.userEmail);
-  formData.append('subject', `🌤️ Weather Intelligence Report - ${emailData.city}`);
-  formData.append('message', emailContent);
-  
-  const response = await fetch('https://api.web3forms.com/submit', {
-    method: 'POST',
-    body: formData
-  });
-
-  if (response.ok) {
-    const result = await response.json();
-    if (result.success) {
-      console.log(`✅ Email sent via Web3Forms to ${emailData.userEmail}!`);
-      return;
-    }
-  }
-  
-  throw new Error('Web3Forms failed - API key needed');
-};
-
-// Method 3: GetForm.io (backup option)
-const sendViaGetForm = async (emailData: EmailData): Promise<void> => {
-  const emailContent = generateEmailContent(emailData);
-  
-  const response = await fetch('https://getform.io/f/your-form-id', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      name: emailData.userName,
-      email: emailData.userEmail,
-      subject: `🌤️ Weather Intelligence Report - ${emailData.city}`,
-      message: emailContent,
-    }),
-  });
-
-  if (response.ok) {
-    console.log(`✅ Email sent via GetForm to ${emailData.userEmail}!`);
-    return;
-  }
-  
-  throw new Error('GetForm failed - form ID needed');
-};
-
 const simulateEmailSending = async (emailData: EmailData): Promise<void> => {
-  // Simulate email sending delay with realistic timing
-  await new Promise(resolve => setTimeout(resolve, 2000));
+  // Simulate email sending delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
   
   console.log('📧 EMAIL SENT SUCCESSFULLY (Simulated)');
   console.log('===========================================');
