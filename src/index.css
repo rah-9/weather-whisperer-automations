@@ -69,31 +69,171 @@
     @apply bg-background text-foreground font-sans;
     font-feature-settings: "rlig" 1, "calt" 1;
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden;
+  }
+}
+
+/* Wavy Background Animation */
+.wavy-background {
+  position: relative;
+  overflow: hidden;
+}
+
+.wavy-background::before,
+.wavy-background::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.1) 50%, rgba(139, 92, 246, 0.1) 100%);
+  z-index: -1;
+}
+
+.wavy-background::before {
+  animation: wave1 15s ease-in-out infinite;
+  clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+}
+
+.wavy-background::after {
+  animation: wave2 20s ease-in-out infinite reverse;
+  clip-path: polygon(0 15%, 100% 0, 100% 100%, 0 85%);
+  opacity: 0.7;
+}
+
+@keyframes wave1 {
+  0%, 100% {
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+  }
+  50% {
+    clip-path: polygon(0 10%, 100% 0, 100% 90%, 0 80%);
+  }
+}
+
+@keyframes wave2 {
+  0%, 100% {
+    clip-path: polygon(0 15%, 100% 0, 100% 100%, 0 85%);
+  }
+  50% {
+    clip-path: polygon(0 5%, 100% 10%, 100% 95%, 0 90%);
+  }
+}
+
+/* Floating particles animation */
+.floating-particles {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.particle {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  animation: float 6s ease-in-out infinite;
+}
+
+.particle:nth-child(1) {
+  width: 8px;
+  height: 8px;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.particle:nth-child(2) {
+  width: 12px;
+  height: 12px;
+  left: 20%;
+  animation-delay: 2s;
+}
+
+.particle:nth-child(3) {
+  width: 6px;
+  height: 6px;
+  left: 30%;
+  animation-delay: 4s;
+}
+
+.particle:nth-child(4) {
+  width: 10px;
+  height: 10px;
+  left: 50%;
+  animation-delay: 1s;
+}
+
+.particle:nth-child(5) {
+  width: 8px;
+  height: 8px;
+  left: 70%;
+  animation-delay: 3s;
+}
+
+.particle:nth-child(6) {
+  width: 14px;
+  height: 14px;
+  left: 80%;
+  animation-delay: 5s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(100vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px) rotate(360deg);
+    opacity: 0;
   }
 }
 
 @layer utilities {
   .animate-fade-in {
-    animation: fadeIn 0.5s ease-in-out;
+    animation: fadeIn 0.6s ease-in-out;
   }
   
   .animate-scale-in {
-    animation: scaleIn 0.3s ease-out;
+    animation: scaleIn 0.4s ease-out;
   }
   
   .animate-slide-up {
-    animation: slideUp 0.4s ease-out;
+    animation: slideUp 0.5s ease-out;
   }
   
   .animate-bounce-slow {
     animation: bounce 2s infinite;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  .card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-hover:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   }
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
@@ -115,11 +255,20 @@
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(40px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  }
+  to {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.6);
   }
 }
 
@@ -142,67 +291,30 @@
   background: #94a3b8;
 }
 
-/* Loading animation */
-.loading-dots {
-  display: inline-block;
-  position: relative;
-  width: 80px;
-  height: 80px;
+/* Enhanced spacing utilities */
+.space-y-8 > * + * {
+  margin-top: 2rem;
 }
 
-.loading-dots div {
-  position: absolute;
-  top: 33px;
-  width: 13px;
-  height: 13px;
-  border-radius: 50%;
-  background: #3b82f6;
-  animation-timing-function: cubic-bezier(0, 1, 1, 0);
+.space-y-12 > * + * {
+  margin-top: 3rem;
 }
 
-.loading-dots div:nth-child(1) {
-  left: 8px;
-  animation: loading-dots1 0.6s infinite;
+.space-y-16 > * + * {
+  margin-top: 4rem;
 }
 
-.loading-dots div:nth-child(2) {
-  left: 8px;
-  animation: loading-dots2 0.6s infinite;
+/* Card spacing improvements */
+.card-content-spaced {
+  padding: 2rem;
+  gap: 1.5rem;
 }
 
-.loading-dots div:nth-child(3) {
-  left: 32px;
-  animation: loading-dots2 0.6s infinite;
+.form-section-spacing {
+  margin-bottom: 2rem;
 }
 
-.loading-dots div:nth-child(4) {
-  left: 56px;
-  animation: loading-dots3 0.6s infinite;
-}
-
-@keyframes loading-dots1 {
-  0% {
-    transform: scale(0);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-@keyframes loading-dots3 {
-  0% {
-    transform: scale(1);
-  }
-  100% {
-    transform: scale(0);
-  }
-}
-
-@keyframes loading-dots2 {
-  0% {
-    transform: translate(0, 0);
-  }
-  100% {
-    transform: translate(24px, 0);
-  }
+.result-section-spacing {
+  margin-top: 3rem;
+  padding: 2rem;
 }
