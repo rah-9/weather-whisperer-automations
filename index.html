@@ -8,17 +8,6 @@
     <title>Weather Intelligence Hub</title>
     <meta name="description" content="Get real-time weather data with AI-powered insights and automated email reports" />
     
-    <!-- EmailJS for client-side email sending -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script type="text/javascript">
-      (function(){
-        // Initialize EmailJS with your public key when available
-        if (typeof emailjs !== 'undefined') {
-          emailjs.init("YOUR_EMAILJS_PUBLIC_KEY"); // Users can replace this
-        }
-      })();
-    </script>
-    
     <!-- Preload fonts for better performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,10 +18,13 @@
     <meta property="og:description" content="Get real-time weather data with AI-powered insights and automated email reports" />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+    
+    <!-- Performance optimizations -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="robots" content="index, follow">
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script src="https://cdn.gpteng.co/gptengineer.js" defer></script>
   </body>
 </html>

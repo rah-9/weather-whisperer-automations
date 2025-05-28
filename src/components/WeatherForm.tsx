@@ -10,7 +10,7 @@ import { validateEmail } from '../utils/validation';
 import { insertWeatherData } from '../utils/supabaseOperations';
 import { fetchWeatherData } from '../utils/weatherApi';
 import { sendEmailViaEmailJS } from '../utils/emailService';
-import { Mail, Database, Send, CloudSun, AlertCircle, CheckCircle } from 'lucide-react';
+import { Mail, Database, Send, CloudSun, AlertCircle, CheckCircle, Sparkles } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import LoadingSpinner from './LoadingSpinner';
 
@@ -33,6 +33,7 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
   });
   const [submitError, setSubmitError] = useState('');
   const [emailSent, setEmailSent] = useState(false);
+  const [processingStep, setProcessingStep] = useState('');
 
   const user = useUser();
   const supabase = useSupabaseClient();
@@ -86,72 +87,77 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
     const humidity = weatherData.current.humidity;
     const windSpeed = weatherData.current.wind_kph;
 
-    let commentary = `Based on today's weather analysis for ${weatherData.location.name}: `;
+    let commentary = `🌍 Weather Analysis for ${weatherData.location.name}: `;
     
-    // Temperature analysis
+    // Temperature analysis with more detailed advice
     if (temp < 0) {
-      commentary += "It's freezing cold! Bundle up with heavy winter clothing, avoid prolonged outdoor exposure, and watch for icy conditions. ";
+      commentary += "❄️ Freezing conditions! Dress in heavy winter layers, limit outdoor exposure, and watch for ice on roads and walkways. ";
     } else if (temp < 10) {
-      commentary += "It's quite cold today. Wear warm layers, a good jacket, and consider gloves and a hat for comfort. ";
+      commentary += "🧥 Cold weather ahead! Wear warm layers, a good winter coat, gloves, and a hat. Perfect for hot drinks and cozy indoor activities. ";
     } else if (temp < 20) {
-      commentary += "Pleasant cool weather! A light jacket or sweater would be perfect. Great for outdoor activities with proper attire. ";
+      commentary += "🍂 Pleasant cool weather! A light jacket or sweater is ideal. Great conditions for walking, jogging, or outdoor sports. ";
     } else if (temp < 30) {
-      commentary += "Lovely mild temperature! Perfect weather for outdoor activities, walking, or exercising. ";
+      commentary += "☀️ Beautiful mild temperature! Perfect weather for all outdoor activities, picnics, and enjoying nature. ";
     } else if (temp < 35) {
-      commentary += "It's quite warm today. Stay hydrated, wear light clothing, and consider indoor activities during peak hours. ";
+      commentary += "🌡️ Warm day ahead! Stay hydrated, wear light breathable clothing, and seek shade during peak sun hours. ";
     } else {
-      commentary += "Extremely hot conditions! Stay indoors during peak hours, drink plenty of water, and avoid strenuous outdoor activities. ";
+      commentary += "🔥 Extremely hot! Stay indoors with AC, drink lots of water, avoid strenuous outdoor activities, and wear sun protection. ";
     }
 
     // Weather condition analysis
     if (condition.includes('rain') || condition.includes('drizzle')) {
-      commentary += "Rain is expected, so don't forget your umbrella and waterproof clothing. ";
+      commentary += "🌧️ Rain expected - carry an umbrella, wear waterproof shoes, and drive carefully. Great weather for indoor activities! ";
     } else if (condition.includes('snow')) {
-      commentary += "Snow conditions present - drive carefully and wear appropriate footwear. ";
+      commentary += "❄️ Snow conditions - drive slowly, wear warm waterproof boots, and enjoy the winter wonderland safely. ";
     } else if (condition.includes('sun') || condition.includes('clear')) {
-      commentary += "Beautiful sunny weather! Perfect for outdoor activities, but don't forget sunscreen and sunglasses. ";
+      commentary += "☀️ Sunny skies ahead! Perfect for outdoor activities, but don't forget SPF 30+ sunscreen and sunglasses. ";
     } else if (condition.includes('cloud')) {
-      commentary += "Cloudy skies provide natural shade - great for outdoor activities without harsh sun. ";
+      commentary += "☁️ Cloudy conditions provide natural shade - excellent for outdoor exercise without harsh sun exposure. ";
     } else if (condition.includes('fog') || condition.includes('mist')) {
-      commentary += "Visibility may be reduced due to fog/mist - drive carefully and allow extra travel time. ";
+      commentary += "🌫️ Limited visibility due to fog - drive with headlights on and allow extra travel time. ";
     }
 
     // Wind analysis
     if (windSpeed > 30) {
-      commentary += "Strong winds expected - secure loose items and be cautious of flying debris. ";
+      commentary += "💨 Strong winds forecast - secure outdoor items, be cautious of falling branches, and avoid high-profile vehicles. ";
     } else if (windSpeed > 15) {
-      commentary += "Moderate winds - great for flying kites but hold onto your hat! ";
+      commentary += "🪁 Breezy conditions - perfect for kite flying, sailing, but hold onto lightweight items! ";
     }
 
-    // Humidity analysis
+    // Humidity comfort analysis
     if (humidity > 80) {
-      commentary += "High humidity levels - you might feel warmer than the actual temperature suggests. ";
+      commentary += "💧 High humidity - you'll feel warmer than the temperature indicates. Stay cool and hydrated! ";
     } else if (humidity < 30) {
-      commentary += "Low humidity - keep hydrated and consider using moisturizer for your skin. ";
+      commentary += "🏜️ Low humidity - use moisturizer, stay hydrated, and consider a humidifier indoors. ";
     }
 
-    // Air quality analysis
+    // Enhanced air quality analysis
     if (aqi && !isNaN(aqi)) {
       if (aqi <= 12) {
-        commentary += "Excellent air quality - perfect conditions for outdoor exercise and activities!";
+        commentary += "💚 Excellent air quality - perfect for all outdoor activities including running, cycling, and sports!";
       } else if (aqi <= 35) {
-        commentary += "Good air quality - safe for all outdoor activities including jogging and cycling.";
+        commentary += "🟢 Good air quality - safe for all outdoor activities. Great day to exercise outside!";
       } else if (aqi <= 55) {
-        commentary += "Moderate air quality - generally acceptable, but sensitive individuals should limit prolonged outdoor exposure.";
+        commentary += "🟡 Moderate air quality - generally fine, but sensitive individuals should monitor symptoms.";
       } else if (aqi <= 150) {
-        commentary += "Unhealthy air quality for sensitive groups - consider limiting time outdoors and avoiding strenuous activities.";
+        commentary += "🟠 Unhealthy for sensitive groups - limit prolonged outdoor exertion, especially if you have respiratory conditions.";
       } else {
-        commentary += "Poor air quality - stay indoors, avoid outdoor exercise, and consider wearing a mask if you must go outside.";
+        commentary += "🔴 Poor air quality - stay indoors, avoid outdoor exercise, and consider wearing an N95 mask if you must go outside.";
       }
     }
 
     return commentary;
   };
 
+  const updateProcessingStep = (step: string) => {
+    setProcessingStep(step);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError('');
     setEmailSent(false);
+    setProcessingStep('');
     
     if (!validateForm()) {
       toast.error('Please fix the errors in the form');
@@ -164,20 +170,23 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
     }
 
     setIsLoading(true);
-    console.log('🚀 Starting weather data processing...');
+    console.log('🚀 Starting weather intelligence processing...');
 
     try {
       // Step 1: Fetch weather data
+      updateProcessingStep('Fetching real-time weather data...');
       console.log('📡 Fetching weather data for:', formData.city);
       const weatherData = await fetchWeatherData(formData.city);
       console.log('✅ Weather data received:', weatherData);
       
       // Step 2: Generate AI commentary
+      updateProcessingStep('Generating AI weather insights...');
       console.log('🤖 Generating AI commentary...');
       const aiCommentary = generateAICommentary(weatherData);
       console.log('✅ AI commentary generated');
       
       // Step 3: Prepare data for storage and email
+      updateProcessingStep('Preparing weather report...');
       const enrichedData = {
         fullName: formData.fullName,
         email: formData.email,
@@ -194,6 +203,7 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
       };
 
       // Step 4: Save to database
+      updateProcessingStep('Saving to secure database...');
       console.log('💾 Saving data to database...');
       const dbData = {
         user_id: user.id,
@@ -210,6 +220,7 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
       console.log('✅ Data saved to database');
 
       // Step 5: Send email automatically
+      updateProcessingStep('Sending personalized email report...');
       console.log('📧 Sending email automatically...');
       const emailSuccess = await sendEmailViaEmailJS({
         userName: formData.fullName,
@@ -225,11 +236,12 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
       setEmailSent(true);
 
       // Step 6: Update UI and show success
+      updateProcessingStep('Complete!');
       onWeatherData(enrichedData);
       
-      toast.success('🎉 Weather data processed and email sent automatically!', {
-        description: `Report sent to ${formData.email}`,
-        duration: 5000,
+      toast.success('🎉 Weather intelligence report generated and sent!', {
+        description: `Comprehensive report sent to ${formData.email}`,
+        duration: 6000,
       });
       
       // Clear form
@@ -240,25 +252,29 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
       setSubmitError(errorMessage);
       toast.error('Failed to process request. Please try again.');
+      updateProcessingStep('');
     } finally {
       setIsLoading(false);
+      setTimeout(() => setProcessingStep(''), 2000);
     }
   };
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <Card className="w-full shadow-2xl bg-white/95 backdrop-blur-sm border-0 hover:shadow-3xl transition-all duration-300 card-hover">
-        <CardHeader className="text-center bg-gradient-to-r from-blue-50 to-cyan-50 rounded-t-lg p-8">
-          <CardTitle className="text-3xl font-bold text-gray-800 flex items-center justify-center gap-3 animate-scale-in">
-            <CloudSun className="w-8 h-8 text-blue-600" />
+      <Card className="w-full shadow-2xl bg-white/95 backdrop-blur-sm border-0 hover:shadow-3xl transition-all duration-300 card-hover overflow-hidden">
+        <CardHeader className="text-center bg-gradient-to-r from-blue-50 via-indigo-50 to-cyan-50 rounded-t-lg p-8 relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-100/20 via-purple-100/20 to-cyan-100/20 animate-pulse-slow"></div>
+          <CardTitle className="text-3xl font-bold text-gray-800 flex items-center justify-center gap-3 animate-scale-in relative z-10">
+            <CloudSun className="w-8 h-8 text-blue-600 animate-bounce-slow" />
             Weather Intelligence Hub
+            <Sparkles className="w-6 h-6 text-purple-500 animate-pulse" />
           </CardTitle>
-          <p className="text-gray-600 text-lg mt-4">Get real-time weather data with AI-powered insights</p>
+          <p className="text-gray-600 text-lg mt-4 relative z-10">Get real-time weather data with AI-powered insights</p>
         </CardHeader>
         
-        <CardContent className="card-content-spaced">
+        <CardContent className="p-8 space-y-8">
           {submitError && (
-            <Alert className="mb-8 border-red-200 bg-red-50 animate-fade-in">
+            <Alert className="border-red-200 bg-red-50 animate-fade-in">
               <AlertCircle className="h-4 w-4 text-red-600" />
               <AlertDescription className="text-red-800">
                 {submitError}
@@ -267,10 +283,19 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
           )}
 
           {emailSent && (
-            <Alert className="mb-8 border-green-200 bg-green-50 animate-fade-in">
+            <Alert className="border-green-200 bg-green-50 animate-fade-in">
               <CheckCircle className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-800">
-                Email sent successfully to {formData.email}! Check your inbox for the weather report.
+                ✅ Weather intelligence report sent successfully to {formData.email}! Check your inbox for the detailed analysis.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isLoading && processingStep && (
+            <Alert className="border-blue-200 bg-blue-50 animate-fade-in">
+              <Sparkles className="h-4 w-4 text-blue-600 animate-spin" />
+              <AlertDescription className="text-blue-800">
+                {processingStep}
               </AlertDescription>
             </Alert>
           )}
@@ -289,6 +314,7 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
                   onChange={handleInputChange}
                   placeholder="Enter your full name"
                   className={`h-14 transition-all duration-200 ${errors.fullName ? 'border-red-500 focus:border-red-500 bg-red-50' : 'focus:border-blue-500 hover:border-blue-300'}`}
+                  disabled={isLoading}
                 />
                 {errors.fullName && (
                   <p className="text-sm text-red-600 flex items-center gap-1 animate-fade-in">
@@ -311,6 +337,7 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
                   onChange={handleInputChange}
                   placeholder="Enter your email address"
                   className={`h-14 transition-all duration-200 ${errors.email ? 'border-red-500 focus:border-red-500 bg-red-50' : 'focus:border-blue-500 hover:border-blue-300'}`}
+                  disabled={isLoading}
                 />
                 {errors.email && (
                   <p className="text-sm text-red-600 flex items-center gap-1 animate-fade-in">
@@ -334,6 +361,7 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
                 onChange={handleInputChange}
                 placeholder="Enter your city (e.g., London, New York, Tokyo)"
                 className={`h-14 transition-all duration-200 ${errors.city ? 'border-red-500 focus:border-red-500 bg-red-50' : 'focus:border-blue-500 hover:border-blue-300'}`}
+                disabled={isLoading}
               />
               {errors.city && (
                 <p className="text-sm text-red-600 flex items-center gap-1 animate-fade-in">
@@ -346,18 +374,19 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
             <div className="pt-6">
               <Button 
                 type="submit" 
-                className="w-full h-16 bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-600 hover:from-blue-700 hover:via-blue-800 hover:to-cyan-700 text-white font-bold text-lg rounded-xl transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl flex items-center justify-center gap-3"
+                className="w-full h-16 bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-600 hover:from-blue-700 hover:via-blue-800 hover:to-cyan-700 text-white font-bold text-lg rounded-xl transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl flex items-center justify-center gap-3 disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none"
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <>
                     <LoadingSpinner />
-                    <span>Processing Weather Data...</span>
+                    <span>Processing Weather Intelligence...</span>
                   </>
                 ) : (
                   <>
                     <Send className="w-5 h-5" />
-                    <span>Get Weather Intelligence & Send Report</span>
+                    <span>Generate Weather Intelligence Report</span>
+                    <Sparkles className="w-5 h-5 animate-pulse" />
                   </>
                 )}
               </Button>
@@ -365,23 +394,26 @@ const WeatherForm: React.FC<WeatherFormProps> = ({ onWeatherData, isLoading, set
           </form>
 
           <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-100 animate-fade-in">
-            <h4 className="font-semibold text-gray-800 mb-4 text-lg">What happens next?</h4>
+            <h4 className="font-semibold text-gray-800 mb-4 text-lg flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-500" />
+              What happens next?
+            </h4>
             <ul className="text-sm text-gray-600 space-y-3">
               <li className="flex items-center gap-3">
-                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                Real-time weather data will be fetched for your city
+                <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                Real-time weather data fetched from global weather stations
               </li>
               <li className="flex items-center gap-3">
-                <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
-                AI will analyze the conditions and provide personalized advice
+                <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span>
+                AI analyzes conditions and provides personalized recommendations
               </li>
               <li className="flex items-center gap-3">
-                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                A detailed weather report will be automatically sent to your email
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                Comprehensive weather report automatically sent to your email
               </li>
               <li className="flex items-center gap-3">
-                <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
-                Your data will be securely stored for future reference
+                <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+                Data securely stored for your weather history tracking
               </li>
             </ul>
           </div>
